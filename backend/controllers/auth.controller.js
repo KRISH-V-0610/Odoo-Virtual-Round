@@ -1,158 +1,205 @@
-import bcrypt from 'bcryptjs';
+// controllers/authController.js
 import User from '../models/user.model.js';
-import { generateToken } from '../lib/utils.js';
 import jwt from 'jsonwebtoken';
 
-export const signup = async (req, res) => {
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
 
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+
+  res.cookie('jwt', token, cookieOptions);
+
+  // Remove password from output
+  user.password = undefined;
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
+  });
+};
+
+
+export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    if (!username || !email || !password) res.status(400).json({ message: `Please enter all fields` });
-
-    if (password.length < 6) res.status(400).json({ message: `Password must be at least 6 characters` });
-
-    const user = await User.findOne({ email })
-    if (user) return res.status(400).json({ message: `User ${username} already exists` });
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = await User.create({ username, email, password: hashedPassword });
-
-    if (newUser) {
-      generateToken(newUser._id, res);
-      res.status(201).json({ message: `User ${username} created successfully`, user: newUser });
-    }
-    else {
-      res.status(400).json({ message: `Failed to create user ${username}` });
-    }
-
-  } catch (error) {
-    console.log("error creating user", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-}
-
-export const login = async (req, res) => {
-
-  const { email, password } = req.body;
-  if (!email || !password) res.status(400).json({ message: `Please enter email and password` });
-
-  try {
-
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: `Invalid email or password` });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: `Invalid email or password` });
-
-    generateToken(user._id, res);
-    res.status(201).json({ message: `Login successful`, user: user });
-  }
-  catch (error) {
-    console.log("error logging in", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-}
-
-export const logout = (req, res) => {
-
-  try {
-    res.cookie("token", "", { maxAge: 0 })
-    res.status(200).json({ message: `Logged out successfully` });
-  } catch (error) {
-    console.log("logout failed", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-}
-
-export const getCurrentUser = async (req, res) => {
-  try {
-    // Get token from cookies
-    const token = req.cookies.token;
-    
-    if (!token) {
-      return res.status(401).json({ 
-        success: false,
-        message: 'Not authorized, no token provided' 
+    // Check if request body is valid
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Username, email, and password are required",
       });
     }
 
-    // Verify and decode the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    
-    // Find the user by ID from decoded token
-    const user = await User.findById(decoded.userId)
-      .select('-password -__v') // Exclude sensitive/uneeded fields
-      .populate({
-        path: 'patients',
-        select: '-__v -createdAt -updatedAt' // Exclude unnecessary patient fields
-      });
-
-    if (!user) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'User not found' 
-      });
-    }
-
-    // Return the user data
-    res.status(200).json({
-      success: true,
-      data: user
+    // Check if user already exists
+    const existingUser = await User.findOne({ 
+      $or: [{ email }, { username }] 
     });
-
-  } catch (error) {
-    console.error('Error fetching current user:', error);
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ 
-        success: false,
-        message: 'Not authorized, invalid token' 
+    if (existingUser) {
+      return res.status(409).json({ // 409 Conflict
+        status: "fail",
+        message: "User with this email or username already exists",
       });
     }
 
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
-        success: false,
-        message: 'Session expired, please login again' 
+    // 3️⃣ Create new user
+    const newUser = await User.create({ username, email, password });
+
+    // 4️⃣ Send token and success response
+    createSendToken(newUser, 201, res);
+
+  } catch (err) {
+    console.error("Registration error:", err);
+
+    // Handle Mongoose validation errors
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        status: "fail",
+        message: Object.values(err.errors).map(e => e.message).join(", "),
       });
     }
 
+    // Handle MongoDB duplicate key error
+    if (err.code === 11000) {
+      return res.status(409).json({
+        status: "fail",
+        message: "Duplicate field value entered",
+      });
+    }
+
+    // Generic server error
     res.status(500).json({
-      success: false,
-      message: 'Server error while fetching user data',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      status: "error",
+      message: "Something went wrong on our side. Please try again later.",
     });
   }
 };
 
-// export const updateProfile = async (req,res)=>{
-//     try {
-//       const {profilePic} = req.body;
-//       const userId = req.user._id;
+export const login = async (req, res) => {
+  try {
+    const { username, password } = req.body;
 
-//       if(!profilePic) return res.status(400).json({ message:`Profile pic is required`});
+    // 1️⃣ Check if username and password exist
+    if (!username || !password) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Please provide username and password",
+      });
+    }
 
-//       const uploadResponse = await cloudinary.uploader.upload(profilePic);
-//       const updatedUser = await User.findByIdAndUpdate(userId, {profilePic: uploadResponse.secure_url}, {new: true});
+    // 2️⃣ Check if user exists
+    const user = await User.findOne({ username }).select("+password");
 
-//       res.status(200).json(updatedUser);
+    // 3️⃣ Validate credentials
+    if (!user || !(await user.correctPassword(password, user.password))) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Incorrect username or password",
+      });
+    }
 
-//     } catch (error) {
-//       console.log("error updating profile", error.message);
-//       res.status(500).json({message: "Internal Server Error"});
-//     }
-// }
+    // 4️⃣ Everything ok → Send JWT token
+    createSendToken(user, 200, res);
 
-// export const checkAuth = (req,res) =>{
-//   try {
-//     console.log(req.body)
-//     res.status(200).json(req.user);
-//   }
-//   catch (error) {
-//     console.log("error chech Auth controller", error.message);
-//     res.status(500).json({message: "Internal Server Error"});
-//   }
-// }
+  } catch (err) {
+    console.error("Login error:", err);
+
+    // Handle mongoose validation error
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        status: "fail",
+        message: Object.values(err.errors).map(e => e.message).join(", "),
+      });
+    }
+
+    // Handle mongoose bad ObjectId or query issues
+    if (err.name === "CastError") {
+      return res.status(400).json({
+        status: "fail",
+        message: "Invalid data format",
+      });
+    }
+
+    // Default → Server error
+    res.status(500).json({
+      status: "error",
+      message: "Something went wrong on our side. Please try again later.",
+    });
+  }
+};
+
+export const logout = (req, res) => {
+  try {
+    // Clear the JWT cookie by setting it to expired
+    res.cookie('jwt', 'loggedout', {
+      expires: new Date(Date.now() + 1000), // Expire in 1 second
+      httpOnly: true,
+    });
+
+    // Alternatively, if using token in Authorization header,
+    // you can just send a success response as the client should remove the token
+    res.status(200).json({
+      status: 'success',
+      message: 'Successfully logged out',
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Error during logout',
+    });
+  }
+};
+
+export const protect = async (req, res, next) => {
+  try {
+    // 1) Getting token and check if it's there - check both header and cookie
+    let token;
+    
+    if (req.cookies && req.cookies.jwt) {
+      token = req.cookies.jwt;
+    }
+
+    if (!token || token === 'loggedout') {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'You are not logged in! Please log in to get access.',
+      });
+    }
+
+    // 2) Verification token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // 3) Check if user still exists
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'The user belonging to this token does no longer exist.',
+      });
+    }
+
+    // GRANT ACCESS TO PROTECTED ROUTE
+    req.user = currentUser;
+    next();
+  } catch (err) {
+    res.status(401).json({
+      status: 'fail',
+      message: 'Invalid token',
+    });
+  }
+};
+

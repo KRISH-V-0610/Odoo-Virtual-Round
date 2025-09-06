@@ -1,49 +1,65 @@
+// models/User.js
 import mongoose from 'mongoose';
-const { Schema } = mongoose; // Destructure Schema from mongoose
+import bcrypt from 'bcryptjs';
 
-const userSchema = new Schema({  // Use Schema directly here
+const userSchema = new mongoose.Schema({
   username: {
     type: String,
-    required: [true, 'Username is required'],
+    required: true,
+    unique: true,
     trim: true,
-    minlength: [3, 'Username must be at least 3 characters']
+    minlength: 3,
+    maxlength: 30
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: true,
     unique: true,
     trim: true,
-    lowercase: true,
-    // match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address']
+    lowercase: true
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters']
+    required: true,
+    minlength: 6
   },
-
-  patients: [{
-    type: Schema.Types.ObjectId, // Now correctly referencing Schema
-    ref: 'Patient'
+  profilePicture: {
+    type: String,
+    default: 'default-avatar.jpg'
+  },
+  // Track user's product listings
+  listings: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
   }],
+  // Track user's purchase history
+  purchases: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Order'
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
 
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
 
-  // role: {
-  //   type: String,
-  //   enum: ['doctor', 'admin'], // Add other roles if needed
-  //   default: 'doctor'
-  // },
-  // profile: {
-  //   firstName: String,
-  //   lastName: String,
-  //   specialization: String,
-  //   hospital: String,
-  //   contactNumber: String,
-  //   avatarUrl: String
-  // }
-}, { timestamps: true });
+// Compare password method
+userSchema.methods.correctPassword = async function(
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
 
-
-
-const User = mongoose.model('User', userSchema);
-export default User;
+export default mongoose.model('User', userSchema);
