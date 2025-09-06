@@ -1,9 +1,10 @@
 import React, { useRef, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 /* ————— Import Components ————— */
 import IconButton from "../Components/IconButton";
 import Pill from "../Components/Pill";
 import MobileMenu from "../Components/MobileMenu";
+import { CartIcon } from "../Components/Icons";
 
 /* ————— Import Icons ————— */
 import {
@@ -52,6 +53,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fileRef = useRef(null);
+  const navigate = useNavigate(); 
 
   const onSave = (e) => {
     e?.preventDefault();
@@ -95,12 +97,18 @@ export default function ProfilePage() {
 
             {/* Right: cart + profile */}
             <div className="ml-auto flex items-center gap-2">
-              <IconButton aria-label="Cart" className="h-10 w-10">
-                <FiShoppingCart className="h-5 w-5 text-slate-700" />
-                <span className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-semibold text-white shadow">
-                  2
-                </span>
-              </IconButton>
+               <IconButton
+                            aria-label="Cart"
+                            onClick={(e) => {
+                                e.stopPropagation();   // if inside another clickable area
+                                navigate("/cart");
+                            }}
+                        >
+                            <CartIcon className="h-5 w-5 text-slate-700" />
+                            <span className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-semibold text-white shadow">
+                                {user.cartItems}
+                            </span>
+                        </IconButton>
               <IconButton aria-label="Profile" className="h-10 w-10">
                 {user.avatarUrl ? (
                   <img

@@ -1,5 +1,6 @@
 // pages/LandingPage.js
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../Components/Header";
 import Banner from "../Components/Banner";
 import CategoryCard from "../Components/CategoryCard";
@@ -52,6 +53,7 @@ const LandingPage = () => {
   }, []);
   const [minPrice, setMinPrice] = useState(priceBounds.min);
   const [maxPrice, setMaxPrice] = useState(priceBounds.max);
+  const navigate = useNavigate(); 
 
   const [user] = useState({
     name: "Alex Johnson",

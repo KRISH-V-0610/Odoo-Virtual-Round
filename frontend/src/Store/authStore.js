@@ -24,7 +24,7 @@ const useAuthStore = create((set, get) => ({
     // formData: { displayName, email, password, ... }
     set({ loading: true, error: null });
     try {
-      const res = await axios.post('/auth/signup', formData);
+      const res = await axios.post('/auth/register', formData);
       // If your API does NOT auto-login on register, remove the next line
       set({ user: res.data.user || res.data, loading: false });
       return true;
