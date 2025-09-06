@@ -1,6 +1,7 @@
 // controllers/productController.js
 import Product from '../models/product.model.js';
 import User from '../models/user.model.js';
+import {cloudinary} from '../config/cloudinary.config.js';
 
 export const getAllProducts = async (req, res) => {
   try {

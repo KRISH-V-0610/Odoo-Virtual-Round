@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import useAuthStore from "../Store/authStore.js";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Input = ({ label, id, type = "text", ...props }) => (
   <div className="flex flex-col gap-1.5 sm:gap-2">
@@ -74,21 +74,20 @@ const Card = ({ title, subtitle, children }) => (
 );
 
 export default function Login() {
-  const [form, setForm] = useState({ identifier: "", password: "" });
-  const [remember, setRemember] = useState(true);
+  const [form, setForm] = useState({ username: "", password: "" });
   const { login, loading, error, clearError } = useAuthStore();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const submit = async (e) => {
     e.preventDefault();
     clearError();
-    if (!form.identifier || !form.password) return;
+    if (!form.username || !form.password) return;
     try {
-      const res = await login({ ...form, remember });
+      const res = await login({ ...form });
       if (res) {
-        // navigate("/");
+        navigate("/home");
       }
-    } catch {}
+    } catch{}
   };
 
   return (
@@ -96,13 +95,13 @@ export default function Login() {
       <Card title="Welcome back" subtitle="Login to EcoFinds">
         <form onSubmit={submit} className="flex flex-col gap-3.5 sm:gap-4">
           <Input
-            label="Email / Username"
-            id="identifier"
-            type="email"
+            label="Username"
+            id="username"
+            type="text"
             placeholder="you@example.com"
             autoComplete="username"
-            value={form.identifier}
-            onChange={(e) => setForm({ ...form, identifier: e.target.value })}
+            value={form.username}
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
             disabled={loading}
             required
           />

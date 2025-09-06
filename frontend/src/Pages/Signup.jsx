@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import useAuthStore from "../Store/authStore.js";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Input = ({ label, id, type = "text", ...props }) => (
   <div className="flex flex-col gap-1.5 sm:gap-2">
@@ -79,20 +79,15 @@ export default function Signup() {
     password: "",
     confirm: "",
   });
-  const [agree, setAgree] = useState(true);
+  // const [agree, setAgree] = useState(true);
 
   const { register, loading, error, clearError } = useAuthStore();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const submit = async (e) => {
     e.preventDefault();
     clearError();
 
-    if (!agree) {
-      // you can also set a local message UI if you don't want alert()
-      alert("Please accept the Terms and Privacy Policy.");
-      return;
-    }
     if (!form.username || !form.email || !form.password) return;
     if (form.password !== form.confirm) {
       alert("Passwords do not match.");
@@ -106,7 +101,7 @@ export default function Signup() {
     });
 
     if (ok) {
-      // navigate("/"); // uncomment if using react-router
+      navigate("/home"); // uncomment if using react-router
     }
   };
 

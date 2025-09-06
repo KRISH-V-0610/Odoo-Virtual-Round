@@ -32,7 +32,6 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
-
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -203,3 +202,59 @@ export const protect = async (req, res, next) => {
   }
 };
 
+
+// controllers/authController.js
+export const isLoggedIn = async (req, res) => {
+  try {
+    let token;
+    
+    // Check for token in cookies
+    if (req.cookies && req.cookies.jwt) {
+      token = req.cookies.jwt;
+    }
+
+    if (!token || token === 'loggedout') {
+      return res.status(200).json({
+        status: 'success',
+        data: {
+          isLoggedIn: false,
+        },
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Check if user still exists
+    const currentUser = await User.findById(decoded.id);
+    
+    if (!currentUser) {
+      return res.status(200).json({
+        status: 'success',
+        data: {
+          isLoggedIn: false,
+        },
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        isLoggedIn: true,
+        user: {
+          id: currentUser._id,
+          username: currentUser.username,
+          email: currentUser.email,
+          profilePicture: currentUser.profilePicture,
+        },
+      },
+    });
+  } catch (err) {
+    res.status(200).json({
+      status: 'success',
+      data: {
+        isLoggedIn: false,
+      },
+    });
+  }
+};

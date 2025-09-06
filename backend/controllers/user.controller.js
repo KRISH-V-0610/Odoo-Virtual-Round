@@ -1,5 +1,7 @@
 // controllers/userController.js
 import User from '../models/user.model.js';
+import {cloudinary } from '../config/cloudinary.config.js';
+
 // import Product from '../models/product.model.js';
 // import Order from '../models/order.model.js';
 
@@ -31,7 +33,7 @@ export const getUserProfile = async (req, res) => {
 
 export const updateUserProfile = async (req, res) => {
   try {
-    const { username, email, password, profilePicture } = req.body;
+    const { username, email, password } = req.body;
     const userId = req.user.id;
 
     // Check username uniqueness
@@ -42,6 +44,10 @@ export const updateUserProfile = async (req, res) => {
       });
       
       if (existingUser) {
+        // Delete uploaded file if username validation fails
+        if (req.file) {
+          await cloudinary.uploader.destroy(req.file.filename);
+        }
         return res.status(409).json({
           status: 'fail',
           message: 'Username is already taken by another user',
@@ -57,6 +63,10 @@ export const updateUserProfile = async (req, res) => {
       });
       
       if (existingUser) {
+        // Delete uploaded file if email validation fails
+        if (req.file) {
+          await cloudinary.uploader.destroy(req.file.filename);
+        }
         return res.status(409).json({
           status: 'fail',
           message: 'Email is already taken by another user',
@@ -64,24 +74,51 @@ export const updateUserProfile = async (req, res) => {
       }
     }
 
-    // Get current user and update fields
+    // Get current user
     const user = await User.findById(userId);
     
     if (!user) {
+      // Delete uploaded file if user not found
+      if (req.file) {
+        await cloudinary.uploader.destroy(req.file.filename);
+      }
       return res.status(404).json({
         status: 'fail',
         message: 'User not found',
       });
     }
 
+    // Store old profile picture for deletion
+    let oldProfilePublicId = null;
+    if (user.profilePicture && user.profilePicture.includes('cloudinary')) {
+      // Extract public_id from Cloudinary URL
+      const urlParts = user.profilePicture.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      oldProfilePublicId = `ecofinds/users/profile/${filename.split('.')[0]}`;
+    }
+
     // Update fields
     if (username) user.username = username;
     if (email) user.email = email;
-    if (profilePicture) user.profilePicture = profilePicture;
-    if (password) user.password = password; // This will trigger pre-save middleware
+    if (password) user.password = password;
 
-    // Save the user - this will trigger password hashing
+    // Handle profile picture upload
+    if (req.file) {
+      user.profilePicture = req.file.path; // Cloudinary URL
+    }
+
+    // Save the user
     const updatedUser = await user.save();
+
+    // Delete old profile picture from Cloudinary if new one was uploaded
+    if (req.file && oldProfilePublicId) {
+      try {
+        await cloudinary.uploader.destroy(oldProfilePublicId);
+      } catch (deleteError) {
+        console.error('Error deleting old profile picture:', deleteError);
+        // Don't fail the request if deletion fails
+      }
+    }
 
     // Remove password from response
     updatedUser.password = undefined;
@@ -93,6 +130,15 @@ export const updateUserProfile = async (req, res) => {
       },
     });
   } catch (err) {
+    // Delete uploaded file if any error occurs
+    if (req.file) {
+      try {
+        await cloudinary.uploader.destroy(req.file.filename);
+      } catch (deleteError) {
+        console.error('Error deleting uploaded file:', deleteError);
+      }
+    }
+
     // Handle errors
     if (err.code === 11000) {
       const field = Object.keys(err.keyValue)[0];
