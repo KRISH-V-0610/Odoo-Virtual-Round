@@ -87,7 +87,7 @@ export default function Login() {
       if (res) {
         navigate("/home");
       }
-    } catch{}
+    } catch{} 
   };
 
   return (

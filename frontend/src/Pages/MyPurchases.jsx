@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState,useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axiosInstance from "../api/axiosInstance";
 import {
   FiSearch,
   FiChevronRight,
@@ -71,12 +72,27 @@ export default function MyPurchases() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // Demo user data
-  const [user] = useState({
-    name: "Alex Johnson",
-    email: "alex@example.com",
-    cartItems: 3,
-    avatarUrl: ""
-  });
+    const [user,setUser] = useState(null);
+     const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axiosInstance.get("/users/profile", {
+          withCredentials: true, // ✅ include cookies
+        });
+        setUser(res.data.data.user); // assuming controller returns { data: { user } }
+      } catch (err) {
+        console.error("Failed to fetch user profile:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+
 
   // controls
   const [q, setQ] = useState("");
@@ -126,6 +142,8 @@ export default function MyPurchases() {
     }, {});
   }, [filtered, groupBy]);
 
+    if (loading) return <p>Loading...</p>;
+    
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-sky-50">
       {/* Header */}

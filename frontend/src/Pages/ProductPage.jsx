@@ -1,4 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
+
+import axiosInstance from "../api/axiosInstance";
+
 import { useNavigate } from "react-router-dom";
 import { FiShoppingCart, FiUser, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
@@ -36,12 +39,28 @@ export default function ProductPage() {
     const touchDeltaX = useRef(0);
 
     // Demo user data
-    const [user] = useState({
-        name: "Alex Johnson",
-        email: "alex@example.com",
-        cartItems: 1,
-        avatarUrl: ""
-    });
+
+        const [user,setUser] = useState(null);
+         const [loading, setLoading] = useState(true)
+      useEffect(() => {
+        const fetchUser = async () => {
+          try {
+            const res = await axiosInstance.get("/users/profile", {
+              withCredentials: true, // ✅ include cookies
+            });
+            setUser(res.data.data.user); // assuming controller returns { data: { user } }
+          } catch (err) {
+            console.error("Failed to fetch user profile:", err);
+          } finally {
+            setLoading(false);
+          }
+        };
+    
+        fetchUser();
+      }, []);
+    
+    
+
     const navigate = useNavigate(); 
 
     // ----- slider functions -----
@@ -79,6 +98,7 @@ export default function ProductPage() {
         alert(`Added "${product.title}" to cart!`);
     };
 
+      if (loading) return <p>Loading...</p>;
     return (
         <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white极to-sky-50">
             {/* Header */}

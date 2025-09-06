@@ -1,6 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import axiosInstance from "../api/axiosInstance";
 import { FiUpload, FiX, FiArrowLeft, FiMenu } from "react-icons/fi";
-import axios from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { CartIcon } from "../Components/Icons";
 
@@ -37,13 +37,26 @@ export default function AddProduct() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  // Demo user data
-  const [user] = useState({
-    name: "Alex Johnson",
-    email: "alex@example.com",
-    cartItems: 3,
-    avatarUrl: ""
-  });
+  // User data
+  const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axiosInstance.get("/users/profile", {
+          withCredentials: true,
+        });
+        setUser(res.data.data.user);
+      } catch (err) {
+        console.error("Failed to fetch user profile:", err);
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const pickFiles = (fileList) => {
     const picked = Array.from(fileList || []).slice(0, 8);
@@ -58,6 +71,8 @@ export default function AddProduct() {
   };
 
   const removeImage = (idx) => {
+    // Clean up the blob URL
+    URL.revokeObjectURL(previews[idx]);
     setFiles((prev) => prev.filter((_, i) => i !== idx));
     setPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
@@ -67,39 +82,159 @@ export default function AddProduct() {
     setCategory("");
     setPrice("");
     setDescription("");
+    
+    // Clean up all blob URLs
+    previews.forEach(url => URL.revokeObjectURL(url));
     setFiles([]);
     setPreviews([]);
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setError("");
+
+  //   if (!title || !category || !price || !description) {
+  //     setError("Please fill Title, Category, Price, and Description.");
+  //     return;
+  //   }
+
+  //   // Validate title length
+  //   if (title.length > 100) {
+  //     setError("Title must be less than 100 characters");
+  //     return;
+  //   }
+
+  //   // Validate description length
+  //   if (description.length > 1000) {
+  //     setError("Description must be less than 1000 characters");
+  //     return;
+  //   }
+
+  //   // Validate price is a positive number
+  //   const priceNum = parseFloat(price);
+  //   if (isNaN(priceNum) || priceNum <= 0) {
+  //     setError("Please enter a valid price");
+  //     return;
+  //   }
+
+  //   const fd = new FormData();
+  //   fd.append("title", title.trim());
+  //   fd.append("description", description.trim());
+  //   fd.append("category", category);
+  //   fd.append("price", priceNum.toString());
+    
+  //   // Append each file individually
+  //   files.forEach((f) => fd.append("images", f));
+
+  //   try {
+  //     setLoading(true);
+  //     const response = await axiosInstance.post("/products", fd, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //       withCredentials: true,
+  //     });
+
+  //     if (response.data.status === 'success') {
+  //       resetForm();
+  //       navigate("/mylistings"); // Navigate to my listings page
+  //     }
+  //   } catch (err) {
+  //     console.error("Create product error:", err);
+  //     setError(err.response?.data?.message || "Failed to create product");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    if (!title || !category || !price || !description) {
-      setError("Please fill Title, Category, Price, and Description.");
-      return;
-    }
+  if (!title || !category || !price || !description) {
+    setError("Please fill Title, Category, Price, and Description.");
+    return;
+  }
 
-    const fd = new FormData();
-    fd.append("title", title);
-    fd.append("description", description);
-    fd.append("category", category);
-    fd.append("price", price);
-    files.forEach((f) => fd.append("images", f));   // Field name: "images" (matches backend multer)
+  // Validate title length
+  if (title.length > 100) {
+    setError("Title must be less than 100 characters");
+    return;
+  }
+
+  // Validate description length
+  if (description.length > 1000) {
+    setError("Description must be less than 1000 characters");
+    return;
+  }
+
+  // Validate price is a positive number
+  const priceNum = parseFloat(price);
+  if (isNaN(priceNum) || priceNum <= 0) {
+    setError("Please enter a valid price");
+    return;
+  }
+
+  // Validate category
+  const validCategories = ['Clothing', 'Electronics', 'Books', 'Furniture', 'Sports', 'Toys', 'Other'];
+  if (!validCategories.includes(category)) {
+    setError(`Category must be one of: ${validCategories.join(', ')}`);
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append("title", title.trim());
+  fd.append("description", description.trim());
+  fd.append("category", category);
+  fd.append("price", priceNum.toString());
+  
+  // Append each file individually
+  files.forEach((f) => fd.append("images", f));
+
+  // Debug: Log FormData contents
+  console.log("FormData contents:");
+  for (let [key, value] of fd.entries()) {
+    console.log(key, value);
+  }
 
     try {
-      setLoading(true);
-      await axios.post("/api/products", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+    setLoading(true);
+    
+    // Send as JSON instead of FormData
+    const productData = {
+      title: title.trim(),
+      description: description.trim(),
+      category: category,
+      price: parseFloat(price),
+      images: [] // Empty array for now since we can't upload files
+    };
+
+    const response = await axiosInstance.post("/products", productData, {
+      headers: { 
+        "Content-Type": "application/json",
+      },
+      withCredentials: true,
+    });
+
+    if (response.data.status === 'success') {
       resetForm();
-      navigate("/my-listings"); // or navigate(`/products/${data._id}`) if your API returns it
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to create product");
-    } finally {
-      setLoading(false);
+      navigate("/mylistings");
     }
-  };
+  } catch (err) {
+    console.error("Create product error details:", err);
+    const errorMessage = err.response?.data?.message || 
+                         "Failed to create product. Please check your inputs and try again.";
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-sky-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-sky-50">
@@ -130,26 +265,26 @@ export default function AddProduct() {
 
             {/* Right: cart + profile */}
             <div className="ml-auto flex items-center gap-2">
-                <IconButton
-                            aria-label="Cart"
-                            onClick={(e) => {
-                                e.stopPropagation();   // if inside another clickable area
-                                navigate("/cart");
-                            }}
-                        >
-                            <CartIcon className="h-5 w-5 text-slate-700" />
-                            <span className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-semibold text-white shadow">
-                                {user.cartItems}
-                            </span>
-                        </IconButton>
+              <IconButton
+                aria-label="Cart"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate("/cart");
+                }}
+              >
+                <CartIcon className="h-5 w-5 text-slate-700" />
+                <span className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-semibold text-white shadow">
+                  {user?.cartItems || 0}
+                </span>
+              </IconButton>
               <IconButton 
                 aria-label="Profile" 
                 className="h-10 w-10"
-                
+                onClick={() => setUserMenuOpen(true)}
               >
-                {user.avatarUrl ? (
+                {user?.profilePicture ? (
                   <img
-                    src={user.avatarUrl}
+                    src={user.profilePicture}
                     alt="avatar"
                     className="h-7 w-7 rounded-full object-cover"
                   />
@@ -217,7 +352,7 @@ export default function AddProduct() {
                 JPG/PNG/WEBP up to 5MB each • drag & drop supported • max 8 images
               </p>
               <input
-                
+                ref={fileRef}
                 type="file"
                 accept="image/*"
                 multiple
@@ -257,6 +392,7 @@ export default function AddProduct() {
               onChange={(e) => setTitle(e.target.value)}
               required
               disabled={loading}
+              maxLength={100}
             />
 
             <Select
@@ -280,8 +416,8 @@ export default function AddProduct() {
               label="Price (₹)"
               type="number"
               min="0"
-              step="1"
-              placeholder="0"
+              step="0.01"
+              placeholder="0.00"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               required
@@ -297,6 +433,7 @@ export default function AddProduct() {
               required
               disabled={loading}
               rows={5}
+              maxLength={1000}
             />
           </div>
 

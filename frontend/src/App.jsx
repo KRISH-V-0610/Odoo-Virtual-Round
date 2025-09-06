@@ -12,9 +12,12 @@ import MyListings from "./Pages/MyListings";
 import MyPurchases from "./Pages/MyPurchases";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
+import ErrorBoundary from "./components/ErrorBoundary";
+
 
 function App() {
   return (
+      <ErrorBoundary>
     <Router>
       <Routes>
         {/* Redirect root to login */}
@@ -53,14 +56,27 @@ function App() {
             <CartPage />
           </ProtectedRoute>
         } />
+        <Route path="/addproduct" element={
+          <ProtectedRoute>
+            <AddProduct  />
+          </ProtectedRoute>
+        } />
+        <Route path="/mylistings" element={
+          <ProtectedRoute>
+            <MyListings />
+          </ProtectedRoute>
+        } />
+        <Route path="/mypurchases" element={
+          <ProtectedRoute>
+            <MyPurchases />
+          </ProtectedRoute>
+        } />
         
         {/* Catch all route - redirect to home if authenticated, else to login */}
         <Route path="*" element={<Navigate to="/home" replace />} />
-        <Route path="/addproduct" element={<AddProduct />} />
-        <Route path="/mylistings" element={<MyListings />} />
-        <Route path="/mypurchases" element={<MyPurchases />} />
       </Routes>
     </Router>
+    </ErrorBoundary>
   );
 }
 

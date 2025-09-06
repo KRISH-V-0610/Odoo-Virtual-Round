@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState,useEffect } from "react";
+import axiosInstance from "../api/axiosInstance";
 import {
   FiShoppingCart,
   FiPlus,
@@ -24,7 +25,9 @@ const INR = new Intl.NumberFormat("en-IN", {
 
 
 export default function CartPage() {
+
   // State management
+  const [loading, setLoading] = useState(true); 
   const [items, setItems] = useState([
     {
       id: 1,
@@ -60,12 +63,25 @@ export default function CartPage() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // Demo user data
-  const [user] = useState({
-    name: "Alex Johnson",
-    email: "alex@example.com",
-    cartItems: items.reduce((total, item) => total + item.qty, 0),
-    avatarUrl: ""
-  });
+  const [user,setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axiosInstance.get("/users/profile", {
+          withCredentials: true, // ✅ include cookies
+        });
+        setUser(res.data.data.user); // assuming controller returns { data: { user } }
+      } catch (err) {
+        console.error("Failed to fetch user profile:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
 
   // ---- actions ----
   const inc = (id) => {
@@ -108,6 +124,8 @@ export default function CartPage() {
     alert(`Proceeding to checkout: ${INR.format(total)}`);
   };
 
+  
+  if (loading) return <p>Loading...</p>;
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-sky-50">
       {/* Header */}

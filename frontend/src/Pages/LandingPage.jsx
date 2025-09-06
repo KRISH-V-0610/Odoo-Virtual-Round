@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/rules-of-hooks */
 // pages/LandingPage.js
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +11,8 @@ import SustainabilitySection from "../Components/SustainabilitySection";
 import Footer from "../Components/Footer";
 import MobileMenu from "../Components/MobileMenu";
 import UserMenu from "../Components/UserMenu";
+
+import axiosInstance from "../api/axiosInstance";
 
 // React Icons
 import {
@@ -55,11 +59,27 @@ const LandingPage = () => {
   const [maxPrice, setMaxPrice] = useState(priceBounds.max);
   const navigate = useNavigate(); 
 
-  const [user] = useState({
-    name: "Alex Johnson",
-    email: "alex@example.com",
-    cartItems: 3,
-  });
+  const [user,setUser] = useState(null);
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axiosInstance.get("/users/profile", {
+          withCredentials: true, // ✅ include cookies
+        });
+        setUser(res.data.data.user); // assuming controller returns { data: { user } }
+      } catch (err) {
+        console.error("Failed to fetch user profile:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  
 
   const categories = [
     { name: "Mobiles", icon: <FiSmartphone className="text-2xl" /> },
@@ -123,6 +143,8 @@ const LandingPage = () => {
     setMaxPrice(priceBounds.max);
     setSearchQuery("");
   };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-sky-50">

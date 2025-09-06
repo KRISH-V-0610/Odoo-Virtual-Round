@@ -55,7 +55,7 @@ const useAuthStore = create((set, get) => ({
   logout: async () => {
     set({ loading: true, error: null });
     try {
-      await axios.post('/auth/logout');
+      await axios.post('/auth/protected-logout');
     } catch (err) {
       // ignore server error but still clear client state
     } finally {
