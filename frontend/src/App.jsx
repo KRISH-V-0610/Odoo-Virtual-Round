@@ -7,6 +7,9 @@ import LandingPage from "./Pages/LandingPage";
 import ProfilePage from "./Pages/ProfilePage";
 import ProductPage from "./Pages/ProductPage";
 import CartPage from "./Pages/CartPage";
+import AddProduct from "./Pages/AddProduct";
+import MyListings from "./Pages/MyListings";
+import MyPurchases from "./Pages/MyPurchases";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 
@@ -53,6 +56,9 @@ function App() {
         
         {/* Catch all route - redirect to home if authenticated, else to login */}
         <Route path="*" element={<Navigate to="/home" replace />} />
+        <Route path="/addproduct" element={<AddProduct />} />
+        <Route path="/mylistings" element={<MyListings />} />
+        <Route path="/mypurchases" element={<MyPurchases />} />
       </Routes>
     </Router>
   );

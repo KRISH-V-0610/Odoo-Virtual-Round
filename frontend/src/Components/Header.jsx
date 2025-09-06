@@ -64,10 +64,7 @@ const Header = ({
                         </IconButton>
                         <IconButton
                             aria-label="Profile"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onUserMenuToggle();
-                            }}
+                            
                         >
                             <span className="block h-7 w-7 rounded-full bg-gradient-to-br from-emerald-400 to-sky-400" />
                         </IconButton>

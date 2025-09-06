@@ -125,7 +125,7 @@ export default function ProductPage() {
                             <IconButton
                                 aria-label="Profile"
                                 className="h-10 w-10"
-                                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                               
                             >
                                 {user.avatarUrl ? (
                                     <img
