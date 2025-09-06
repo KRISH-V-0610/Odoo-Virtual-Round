@@ -62,13 +62,7 @@ const useAuthStore = create((set, get) => ({
         user: null,
         loading: false,
         error: null,
-        // (keep or clear your extra slices depending on UX)
-        detailedUser: null,
-        myTeams: [],
-        myLeadTeams: [],
-        myMemberTeams: [],
-        joinRequestsByIdea: {},
-        joinStatusByIdea: {},
+      
       });
     }
   },
