@@ -6,6 +6,9 @@ import LandingPage from "./Pages/LandingPage";
 import ProfilePage from "./Pages/ProfilePage";
 import ProductPage from "./Pages/ProductPage";
 import CartPage from "./Pages/CartPage";
+import AddProduct from "./Pages/AddProduct";
+import MyListings from "./Pages/MyListings";
+import MyPurchases from "./Pages/MyPurchases";
 
 function App() {
   return (
@@ -18,6 +21,9 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/product" element={<ProductPage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/addproduct" element={<AddProduct />} />
+        <Route path="/mylistings" element={<MyListings />} />
+        <Route path="/mypurchases" element={<MyPurchases />} />
       </Routes>
     </Router>
   );
