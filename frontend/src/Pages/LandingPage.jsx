@@ -1,186 +1,277 @@
-import React, { useState } from "react";
+// pages/LandingPage.js
+import React, { useState, useEffect, useMemo } from "react";
+import Header from "../Components/Header";
+import Banner from "../Components/Banner";
+import CategoryCard from "../Components/CategoryCard";
+import ProductCard from "../Components/ProductCard";
+import SustainabilitySection from "../Components/SustainabilitySection";
+import Footer from "../Components/Footer";
+import MobileMenu from "../Components/MobileMenu";
+import UserMenu from "../Components/UserMenu";
 
-const IconButton = ({ children, className = "", ...props }) => (
-  <button
-    className={
-      "relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm hover:bg-slate-50 active:scale-[0.99] " +
-      className
-    }
-    {...props}
-  >
-    {children}
-  </button>
-);
+// React Icons
+import {
+  FiSmartphone,
+  FiShoppingBag,
+  FiHome,
+  FiBook,
+  FiActivity,
+  FiArrowRight,
+  FiFilter,
+} from "react-icons/fi";
 
-const Pill = ({ children, className = "", ...props }) => (
-  <button
-    className={
-      "whitespace-nowrap rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 " +
-      className
-    }
-    {...props}
-  >
-    {children}
-  </button>
-);
+/* ------------------------- Dummy product data ------------------------- */
+const PRODUCTS = [
+  { id: 1,  title: "Redmi Note 11 (Used, Mint)",     category: "Mobiles", price: 7999,  condition: "used",  date: "2025-08-05" },
+  { id: 2,  title: "iPhone 11 – Good Battery",        category: "Mobiles", price: 18999, condition: "used",  date: "2025-08-01" },
+  { id: 3,  title: "Samsung Galaxy A15 (New Seal)",    category: "Mobiles", price: 15999, condition: "new",   date: "2025-07-22" },
+  { id: 4,  title: "Vintage Denim Jacket",             category: "Fashion", price: 1299,  condition: "used",  date: "2025-07-28" },
+  { id: 5,  title: "Running Shoes (Brand New)",        category: "Fashion", price: 2599,  condition: "new",   date: "2025-07-15" },
+  { id: 6,  title: "IKEA Side Table",                  category: "Home",    price: 1499,  condition: "used",  date: "2025-06-30" },
+  { id: 7,  title: "Desk Lamp – Warm Light",           category: "Home",    price: 899,   condition: "used",  date: "2025-08-03" },
+  { id: 8,  title: "Non-stick Pan Set (New)",          category: "Home",    price: 1799,  condition: "new",   date: "2025-07-09" },
+  { id: 9,  title: "Programming in JS – 2nd Ed.",      category: "Books",   price: 499,   condition: "used",  date: "2025-06-20" },
+  { id: 10, title: "Clean Code (Like New)",            category: "Books",   price: 699,   condition: "used",  date: "2025-07-11" },
+  { id: 11, title: "Cricket Bat – English Willow",     category: "Sports",  price: 3499,  condition: "used",  date: "2025-08-04" },
+  { id: 12, title: "Dumbbell Set 10kg (New)",          category: "Sports",  price: 2999,  condition: "new",   date: "2025-07-25" },
+];
 
-const SearchBar = ({ value, onChange }) => (
-  <div className="relative">
-    <input
-      value={value}
-      onChange={onChange}
-      placeholder="Search products…"
-      className="w-full rounded-2xl border border-slate-300 bg-white pl-11 pr-4 py-3 text-slate-900 placeholder:slate-400 shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 transition"
-    />
-    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-  </div>
-);
+/* ------------------------------ Component ----------------------------- */
+const LandingPage = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("All");
 
-const Banner = () => (
-  <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-md">
-    <div className="aspect-[16/9] w-full bg-gradient-to-r from-emerald-200 via-emerald-100 to-sky-200 grid place-items-center">
-      <div className="text-center px-4">
-        <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900">
-          Find great pre-loved deals
-        </h2>
-        <p className="mt-2 text-slate-700 text-sm sm:text-base">
-          Buy & sell second-hand items. Save money, reduce waste.
-        </p>
-        <a
-          href="#categories"
-          className="mt-4 inline-flex rounded-2xl bg-emerald-600 px-4 py-2.5 text-white shadow hover:bg-emerald-500"
-        >
-          Explore now
-        </a>
-      </div>
-    </div>
-  </section>
-);
+  // filter state
+  const [condition, setCondition] = useState("all"); // all | new | used
+  const [sortBy, setSortBy] = useState("recent");   // recent | priceLow | priceHigh
+  const priceBounds = useMemo(() => {
+    const prices = PRODUCTS.map(p => p.price);
+    return { min: Math.min(...prices), max: Math.max(...prices) };
+  }, []);
+  const [minPrice, setMinPrice] = useState(priceBounds.min);
+  const [maxPrice, setMaxPrice] = useState(priceBounds.max);
 
-const CategoryCard = ({ name, emoji }) => (
-  <button className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:bg-slate-50 active:scale-[0.99]">
-    <div className="grid h-16 w-20 place-items-center rounded-xl bg-slate-100 text-2xl">
-      {emoji}
-    </div>
-    <span className="text-xs font-medium text-slate-700">{name}</span>
-  </button>
-);
-
-const ProductGhost = () => (
-  <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <div className="aspect-square w-full bg-slate-100 rounded-t-2xl" />
-    <div className="p-3">
-      <div className="h-4 w-2/3 bg-slate-100 rounded mb-2" />
-      <div className="h-4 w-1/3 bg-slate-100 rounded" />
-    </div>
-  </div>
-);
-
-export default function LandingPage() {
-  const [q, setQ] = useState("");
+  const [user] = useState({
+    name: "Alex Johnson",
+    email: "alex@example.com",
+    cartItems: 3,
+  });
 
   const categories = [
-    { name: "Mobiles", emoji: "📱" },
-    { name: "Laptops", emoji: "💻" },
-    { name: "Fashion", emoji: "👗" },
-    { name: "Home", emoji: "🛋️" },
-    { name: "Books", emoji: "📚" },
-    { name: "Sports", emoji: "🏏" },
+    { name: "Mobiles", icon: <FiSmartphone className="text-2xl" /> },
+    { name: "Fashion", icon: <FiShoppingBag className="text-2xl" /> },
+    { name: "Home",    icon: <FiHome className="text-2xl" /> },
+    { name: "Books",   icon: <FiBook className="text-2xl" /> },
+    { name: "Sports",  icon: <FiActivity className="text-2xl" /> },
   ];
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => userMenuOpen && setUserMenuOpen(false);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [userMenuOpen]);
+
+  /* --------------------------- Filtering logic --------------------------- */
+  const filteredProducts = useMemo(() => {
+    let items = PRODUCTS.slice();
+
+    // category
+    if (activeCategory !== "All") {
+      items = items.filter((p) => p.category === activeCategory);
+    }
+
+    // search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q)
+      );
+    }
+
+    // condition
+    if (condition !== "all") {
+      items = items.filter((p) => p.condition === condition);
+    }
+
+    // price range
+    items = items.filter((p) => p.price >= Number(minPrice) && p.price <= Number(maxPrice));
+
+    // sort
+    if (sortBy === "recent") {
+      items.sort((a, b) => +new Date(b.date) - +new Date(a.date));
+    } else if (sortBy === "priceLow") {
+      items.sort((a, b) => a.price - b.price);
+    } else if (sortBy === "priceHigh") {
+      items.sort((a, b) => b.price - a.price);
+    }
+
+    return items;
+  }, [activeCategory, searchQuery, condition, minPrice, maxPrice, sortBy]);
+
+  const clearFilters = () => {
+    setActiveCategory("All");
+    setCondition("all");
+    setSortBy("recent");
+    setMinPrice(priceBounds.min);
+    setMaxPrice(priceBounds.max);
+    setSearchQuery("");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-sky-50">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex items-center gap-3 py-3">
-            <IconButton aria-label="Menu">
-              <HamburgerIcon className="h-5 w-5 text-slate-700" />
-            </IconButton>
+      <Header
+        searchQuery={searchQuery}
+        onSearchChange={(e) => setSearchQuery(e.target.value)}
+        activeCategory={activeCategory}
+        onCategoryChange={setActiveCategory}
+        onMenuOpen={() => setMobileMenuOpen(true)}
+        onUserMenuToggle={() => setUserMenuOpen(!userMenuOpen)}
+        user={user}
+      />
 
-            <div className="select-none text-lg font-semibold text-emerald-700">
-              EcoFinds
-            </div>
+      <UserMenu
+        user={user}
+        isOpen={userMenuOpen}
+        onClose={() => setUserMenuOpen(false)}
+      />
 
-            <div className="ml-auto flex items-center gap-2">
-              <IconButton aria-label="Cart" className="h-10 w-10">
-                <CartIcon className="h-5 w-5 text-slate-700" />
-                <span className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-semibold text-white shadow">
-                  3
-                </span>
-              </IconButton>
-              <IconButton aria-label="Profile">
-                <span className="block h-7 w-7 rounded-full bg-gradient-to-br from-emerald-400 to-sky-400" />
-              </IconButton>
-            </div>
-          </div>
+      <MobileMenu
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        user={user}
+      />
 
-          {/* Search + actions */}
-          <div className="pb-3">
-            <SearchBar value={q} onChange={(e) => setQ(e.target.value)} />
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-              <Pill>Sort</Pill>
-              <Pill>Filter</Pill>
-              <Pill>Group by</Pill>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main */}
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-6 md:py-8">
         <Banner />
 
         {/* Categories */}
-        <section id="categories" className="mt-6">
-          <Pill className="w-full justify-center">All Categories</Pill>
-          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6">
-            {categories.map((c) => (
-              <CategoryCard key={c.name} {...c} />
+        <section id="categories" className="mt-6 md:mt-8">
+          <h2 className="text-xl font-semibold text-slate-800 text-center mb-4">
+            Shop by Category
+          </h2>
+
+          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+            {/* All category */}
+            <CategoryCard
+              key="All"
+              name="All"
+              icon={<span className="text-lg font-semibold">All</span>}
+              onClick={() => setActiveCategory("All")}
+              isActive={activeCategory === "All"}
+            />
+            {categories.map((category) => (
+              <CategoryCard
+                key={category.name}
+                name={category.name}
+                icon={category.icon}
+                onClick={() => setActiveCategory(category.name)}
+                isActive={activeCategory === category.name}
+              />
             ))}
           </div>
         </section>
 
-        {/* Product previews (ghost placeholders) */}
-        <section className="mt-6">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <ProductGhost />
-            <ProductGhost />
-            <ProductGhost />
+        {/* Filters */}
+        <section className="mt-8">
+          <div className="flex flex-wrap items-end gap-3 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-slate-600">Condition</label>
+              <select
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+                className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+              >
+                <option value="all">All</option>
+                <option value="new">New</option>
+                <option value="used">Used</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-slate-600">Sort by</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+              >
+                <option value="recent">Recent</option>
+                <option value="priceLow">Price: Low → High</option>
+                <option value="priceHigh">Price: High → Low</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-slate-600">Min Price</label>
+              <input
+                type="number"
+                min={priceBounds.min}
+                max={priceBounds.max}
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                className="mt-1 w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-slate-600">Max Price</label>
+              <input
+                type="number"
+                min={priceBounds.min}
+                max={priceBounds.max}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="mt-1 w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+              />
+            </div>
+
+            <button
+              onClick={clearFilters}
+              className="ml-auto inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+              title="Clear filters"
+            >
+              <FiFilter className="h-4 w-4" />
+              Clear
+            </button>
           </div>
         </section>
+
+        {/* Filtered products */}
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">Fresh finds</h3>
+            <button
+              className="flex items-center gap-1 text-sm text-emerald-700 font-medium hover:underline"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            >
+              View all
+              <FiArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          {filteredProducts.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-600">
+              No products match your filters.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {filteredProducts.map((p, i) => (
+                <ProductCard key={p.id} title={p.title} price={p.price} index={i} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <SustainabilitySection />
       </main>
 
-      {/* Footer */}
-      <footer className="mt-8 border-t border-slate-200 bg-white/70 py-4 text-center text-xs text-slate-600">
-        © {new Date().getFullYear()} EcoFinds · Buy less, choose well ♻️
-      </footer>
+      <Footer />
     </div>
   );
-}
+};
 
-/* ——— Icons ——— */
-function HamburgerIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  );
-}
-function SearchIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2"/>
-      <path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  );
-}
-function CartIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <path d="M3 4h2l2.4 12.2A2 2 0 0 0 9.36 18h7.78a2 2 0 0 0 1.97-1.64L21 8H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="10" cy="20" r="1.5" fill="currentColor"/>
-      <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
-    </svg>
-  );
-}
+export default LandingPage;

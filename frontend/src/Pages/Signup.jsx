@@ -74,7 +74,7 @@ const Card = ({ title, subtitle, children }) => (
 
 export default function Signup() {
   const [form, setForm] = useState({
-    displayName: "",
+    username: "",
     email: "",
     password: "",
     confirm: "",
@@ -93,14 +93,14 @@ export default function Signup() {
       alert("Please accept the Terms and Privacy Policy.");
       return;
     }
-    if (!form.displayName || !form.email || !form.password) return;
+    if (!form.username || !form.email || !form.password) return;
     if (form.password !== form.confirm) {
       alert("Passwords do not match.");
       return;
     }
 
     const ok = await register({
-      displayName: form.displayName,
+      username: form.username,
       email: form.email,
       password: form.password,
     });
@@ -115,12 +115,12 @@ export default function Signup() {
       <Card title="Create your EcoFinds account" subtitle="Join the circular economy">
         <form onSubmit={submit} className="flex flex-col gap-3.5 sm:gap-4">
           <Input
-            label="Display Name"
-            id="displayName"
-            placeholder="Your name"
+            label="Username"
+            id="username"
+            placeholder="Username"
             autoComplete="nickname"
-            value={form.displayName}
-            onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+            value={form.username}
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
             disabled={loading}
             required
           />
@@ -156,16 +156,8 @@ export default function Signup() {
             required
           />
 
-          <label className="mt-0.5 flex items-start gap-3 text-xs sm:text-sm text-slate-700">
-            <input
-              type="checkbox"
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-300"
-              checked={agree}
-              onChange={(e) => setAgree(e.target.checked)}
-              disabled={loading}
-            />
-            I agree to the Terms and Privacy Policy.
-          </label>
+          
+            
 
           {error && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs sm:text-sm text-rose-700">

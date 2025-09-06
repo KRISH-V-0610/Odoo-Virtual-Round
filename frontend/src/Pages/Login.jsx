@@ -117,25 +117,7 @@ export default function Login() {
             required
           />
 
-          {/* Mobile-friendly row: larger tap targets & spacing */}
-          <div className="flex items-center justify-between text-xs sm:text-sm">
-            <label className="flex items-center gap-2 text-slate-700 active:opacity-90">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-300"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                disabled={loading}
-              />
-              Remember me
-            </label>
-            <a
-              href="#"
-              className="font-medium text-emerald-700 hover:text-emerald-800 underline underline-offset-4"
-            >
-              Forgot password?
-            </a>
-          </div>
+          
 
           {error && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs sm:text-sm text-rose-700">
