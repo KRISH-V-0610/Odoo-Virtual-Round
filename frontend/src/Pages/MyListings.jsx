@@ -9,6 +9,7 @@ import {
   FiTrash2,
   FiEye
 } from "react-icons/fi";
+import { CartIcon } from "../Components/Icons";
 
 // Import Components
 import IconButton from "../Components/IconButton";
@@ -186,7 +187,18 @@ export default function MyListings() {
 
             {/* Right: cart + profile */}
             <div className="ml-auto flex items-center gap-2">
-                
+                <IconButton
+                            aria-label="Cart"
+                            onClick={(e) => {
+                                e.stopPropagation();   // if inside another clickable area
+                                navigate("/cart");
+                            }}
+                        >
+                            <CartIcon className="h-5 w-5 text-slate-700" />
+                            <span className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-semibold text-white shadow">
+                                {user.cartItems}
+                            </span>
+                        </IconButton>
                 
                 
               <IconButton 

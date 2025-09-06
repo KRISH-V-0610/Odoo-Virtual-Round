@@ -58,6 +58,9 @@ export default function AddProduct() {
   };
 
   const removeImage = (idx) => {
+    // Revoke the object URL to prevent memory leaks
+    URL.revokeObjectURL(previews[idx]);
+    
     setFiles((prev) => prev.filter((_, i) => i !== idx));
     setPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
@@ -67,6 +70,10 @@ export default function AddProduct() {
     setCategory("");
     setPrice("");
     setDescription("");
+    
+    // Revoke all object URLs to prevent memory leaks
+    previews.forEach(url => URL.revokeObjectURL(url));
+    
     setFiles([]);
     setPreviews([]);
   };
@@ -77,6 +84,11 @@ export default function AddProduct() {
 
     if (!title || !category || !price || !description) {
       setError("Please fill Title, Category, Price, and Description.");
+      return;
+    }
+
+    if (files.length === 0) {
+      setError("Please upload at least one image.");
       return;
     }
 
@@ -131,21 +143,21 @@ export default function AddProduct() {
             {/* Right: cart + profile */}
             <div className="ml-auto flex items-center gap-2">
                 <IconButton
-                            aria-label="Cart"
-                            onClick={(e) => {
-                                e.stopPropagation();   // if inside another clickable area
-                                navigate("/cart");
-                            }}
-                        >
-                            <CartIcon className="h-5 w-5 text-slate-700" />
-                            <span className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-semibold text-white shadow">
-                                {user.cartItems}
-                            </span>
-                        </IconButton>
+                  aria-label="Cart"
+                  onClick={(e) => {
+                      e.stopPropagation();   // if inside another clickable area
+                      navigate("/cart");
+                  }}
+                >
+                  <CartIcon className="h-5 w-5 text-slate-700" />
+                  <span className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-semibold text-white shadow">
+                      {user.cartItems}
+                  </span>
+                </IconButton>
               <IconButton 
                 aria-label="Profile" 
                 className="h-10 w-10"
-                
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
               >
                 {user.avatarUrl ? (
                   <img
@@ -217,7 +229,7 @@ export default function AddProduct() {
                 JPG/PNG/WEBP up to 5MB each • drag & drop supported • max 8 images
               </p>
               <input
-                
+                ref={fileRef} 
                 type="file"
                 accept="image/*"
                 multiple

@@ -179,68 +179,85 @@ const LandingPage = () => {
         </section>
 
         {/* Filters */}
-        <section className="mt-8">
-          <div className="flex flex-wrap items-end gap-3 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-            <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-600">Condition</label>
-              <select
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-              >
-                <option value="all">All</option>
-                <option value="new">New</option>
-                <option value="used">Used</option>
-              </select>
-            </div>
+       <section className="mt-8">
+  <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    {/* Condition Filter */}
+    <div className="flex flex-col min-w-[140px]">
+      <label className="text-xs font-medium text-slate-700 mb-2">Condition</label>
+      <select
+        value={condition}
+        onChange={(e) => setCondition(e.target.value)}
+        className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
+      >
+        <option value="all">All Conditions</option>
+        <option value="new">New</option>
+        <option value="used">Used</option>
+      </select>
+    </div>
 
-            <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-600">Sort by</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-              >
-                <option value="recent">Recent</option>
-                <option value="priceLow">Price: Low → High</option>
-                <option value="priceHigh">Price: High → Low</option>
-              </select>
-            </div>
+    {/* Sort By Filter */}
+    <div className="flex flex-col min-w-[160px]">
+      <label className="text-xs font-medium text-slate-700 mb-2">Sort by</label>
+      <select
+        value={sortBy}
+        onChange={(e) => setSortBy(e.target.value)}
+        className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
+      >
+        <option value="recent">Most Recent</option>
+        <option value="priceLow">Price: Low → High</option>
+        <option value="priceHigh">Price: High → Low</option>
+      </select>
+    </div>
 
-            <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-600">Min Price</label>
-              <input
-                type="number"
-                min={priceBounds.min}
-                max={priceBounds.max}
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="mt-1 w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-600">Max Price</label>
-              <input
-                type="number"
-                min={priceBounds.min}
-                max={priceBounds.max}
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="mt-1 w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-              />
-            </div>
-
-            <button
-              onClick={clearFilters}
-              className="ml-auto inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-              title="Clear filters"
-            >
-              <FiFilter className="h-4 w-4" />
-              Clear
-            </button>
+    {/* Price Range Container */}
+    <div className="flex flex-col">
+      <label className="text-xs font-medium text-slate-700 mb-2">Price Range</label>
+      <div className="flex items-center gap-2">
+        <div className="flex flex-col">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">₹</span>
+            <input
+              type="number"
+              min={priceBounds.min}
+              max={priceBounds.max}
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              className="w-28 rounded-xl border border-slate-300 bg-white pl-8 pr-3 py-2.5 text-sm text-slate-800 transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
+              placeholder="Min"
+            />
           </div>
-        </section>
+        </div>
+        
+        <span className="text-slate-400 mb-1">-</span>
+        
+        <div className="flex flex-col">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">₹</span>
+            <input
+              type="number"
+              min={priceBounds.min}
+              max={priceBounds.max}
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              className="w-28 rounded-xl border border-slate-300 bg-white pl-8 pr-3 py-2.5 text-sm text-slate-800 transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
+              placeholder="Max"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Clear Button */}
+    <button
+      onClick={clearFilters}
+      className="ml-auto inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+      title="Clear all filters"
+    >
+      <FiFilter className="h-4 w-4" />
+      Clear Filters
+    </button>
+  </div>
+</section>
 
         {/* Filtered products */}
         <section className="mt-8">
